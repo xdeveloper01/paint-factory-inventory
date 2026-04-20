@@ -1,0 +1,1 @@
+-keep class com.paintfactory.inventory.data.local.entities.** { *; }
