@@ -1,4 +1,4 @@
-package com.paintfactory.inventory.ui.viewmodel
+﻿package com.paintfactory.inventory.ui.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -23,11 +23,55 @@ class MaterialDetailViewModel @Inject constructor(
     private val _material = MutableStateFlow<RawMaterial?>(null)
     val material: StateFlow<RawMaterial?> = _material.asStateFlow()
 
+    private val _isDeleted = MutableStateFlow(false)
+    val isDeleted: StateFlow<Boolean> = _isDeleted.asStateFlow()
+
     init {
-        if (materialId.isNotBlank()) {
-            viewModelScope.launch {
-                _material.value = materialDao.getById(materialId)
-            }
+        loadMaterial()
+    }
+
+    private fun loadMaterial() {
+        if (materialId.isBlank()) return
+
+        viewModelScope.launch {
+            _material.value = materialDao.getById(materialId)
+        }
+    }
+
+    fun updateMaterial(
+        nameEn: String,
+        nameAr: String?,
+        reorderPoint: Float,
+        reorderQty: Float,
+        isHazardous: Boolean
+    ) {
+        val current = _material.value ?: return
+
+        val normalizedNameAr = nameAr?.trim().orEmpty().ifBlank { null }
+
+        viewModelScope.launch {
+            val updated = current.copy(
+                nameEn = nameEn.trim(),
+                nameAr = normalizedNameAr,
+                shortNameEn = nameEn.trim().take(20),
+                shortNameAr = normalizedNameAr?.take(20),
+                reorderPoint = reorderPoint,
+                reorderQty = reorderQty,
+                isHazardous = isHazardous,
+                updatedAt = System.currentTimeMillis()
+            )
+
+            materialDao.update(updated)
+            _material.value = materialDao.getById(current.id)
+        }
+    }
+
+    fun deleteMaterial() {
+        if (materialId.isBlank()) return
+
+        viewModelScope.launch {
+            materialDao.softDeleteById(materialId, System.currentTimeMillis())
+            _isDeleted.value = true
         }
     }
 }

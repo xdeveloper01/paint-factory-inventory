@@ -30,6 +30,9 @@ interface MaterialDao {
     
     @Query("SELECT * FROM raw_materials WHERE category = :category AND isActive = 1")
     fun getByCategory(category: ChemicalCategory): Flow<List<RawMaterial>>
+
+    @Query("UPDATE raw_materials SET isActive = 0, updatedAt = :timestamp WHERE id = :id")
+    suspend fun softDeleteById(id: String, timestamp: Long)
 }
 
 @Dao
