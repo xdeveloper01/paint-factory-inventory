@@ -2,24 +2,36 @@ package com.paintfactory.inventory.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.paintfactory.inventory.data.local.dao.InventoryDao
 import com.paintfactory.inventory.data.local.dao.MaterialDao
 import com.paintfactory.inventory.data.local.entities.ChemicalCategory
+import com.paintfactory.inventory.data.local.entities.InventoryLot
 import com.paintfactory.inventory.data.local.entities.MeasureUnit
 import com.paintfactory.inventory.data.local.entities.RawMaterial
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
 
 @HiltViewModel
+@OptIn(ExperimentalCoroutinesApi::class)
 class InventoryViewModel @Inject constructor(
-    private val materialDao: MaterialDao
+    private val materialDao: MaterialDao,
+    private val inventoryDao: InventoryDao
 ) : ViewModel() {
-    
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-    
+
     val materials: StateFlow<List<RawMaterial>> = _searchQuery
         .flatMapLatest { query ->
             if (query.isEmpty()) {
@@ -29,11 +41,17 @@ class InventoryViewModel @Inject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }
-    
+
+    suspend fun getExportData(): Pair<List<RawMaterial>, List<InventoryLot>> {
+        val allMaterials = materialDao.getAll().first()
+        val allLots = inventoryDao.getAllLots().first()
+        return allMaterials to allLots
+    }
+
     fun addMaterial(
         sku: String,
         nameEn: String,

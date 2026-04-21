@@ -44,16 +44,16 @@ interface InventoryDao {
     suspend fun getAvailableLotsOrderedByExpiry(materialId: String, currentTime: Long): List<InventoryLot>
     
     @Query("""
-        SELECT materialId, SUM(quantityCurrent - quantityReserved) as availableQty,
-        MIN(expiryDate) as earliestExpiry
+        SELECT materialId, 
+        CAST(SUM(quantityCurrent) AS REAL) as availableQty
         FROM inventory_lots
         WHERE status = 'AVAILABLE'
         GROUP BY materialId
     """)
     fun getStockAvailability(): Flow<List<StockAvailability>>
     
-    @Query("UPDATE inventory_lots SET quantityCurrent = quantityCurrent - :amount, version = version + 1, lastModified = :timestamp WHERE id = :lotId")
-    suspend fun consumeFromLot(lotId: String, amount: Float, timestamp: Long = System.currentTimeMillis())
+    @Query("UPDATE inventory_lots SET quantityCurrent = quantityCurrent - :amount WHERE id = :lotId")
+    suspend fun consumeFromLot(lotId: String, amount: Float)
     
     @Insert
     suspend fun insertLot(lot: InventoryLot)
@@ -66,11 +66,42 @@ interface InventoryDao {
     
     @Query("SELECT * FROM inventory_lots WHERE materialId = :materialId ORDER BY receivedDate DESC")
     fun getLotsForMaterial(materialId: String): Flow<List<InventoryLot>>
+
+    @Query("SELECT * FROM inventory_lots ORDER BY receivedDate DESC")
+    fun getAllLots(): Flow<List<InventoryLot>>
+    
+    // NEW: Low stock alert query
+    @Query("""
+        SELECT rm.* FROM raw_materials rm
+        WHERE rm.isActive = 1
+        AND rm.reorderPoint >= (
+            SELECT COALESCE(SUM(quantityCurrent), 0) 
+            FROM inventory_lots 
+            WHERE materialId = rm.id AND status = 'AVAILABLE'
+        )
+    """)
+    fun getLowStockMaterials(): Flow<List<RawMaterial>>
+    
+    // NEW: Expiring lots query
+    @Query("""
+        SELECT * FROM inventory_lots 
+        WHERE status = 'AVAILABLE' 
+        AND expiryDate BETWEEN :currentTime AND :warningTime
+        ORDER BY expiryDate ASC
+    """)
+    fun getExpiringLots(currentTime: Long, warningTime: Long): Flow<List<InventoryLot>>
+    
+    // NEW: Expired count query
+    @Query("""
+        SELECT COUNT(*) FROM inventory_lots 
+        WHERE status = 'AVAILABLE' 
+        AND expiryDate < :currentTime
+    """)
+    suspend fun getExpiredCount(currentTime: Long): Int
     
     data class StockAvailability(
         val materialId: String,
-        val availableQty: Float,
-        val earliestExpiry: Long?
+        val availableQty: Float
     )
 }
 

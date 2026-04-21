@@ -3,7 +3,11 @@ package com.paintfactory.inventory.di
 import android.content.Context
 import androidx.room.Room
 import com.paintfactory.inventory.data.local.AppDatabase
-import com.paintfactory.inventory.data.local.dao.*
+import com.paintfactory.inventory.data.local.dao.BatchDao
+import com.paintfactory.inventory.data.local.dao.FormulaDao
+import com.paintfactory.inventory.data.local.dao.InventoryDao
+import com.paintfactory.inventory.data.local.dao.MaterialDao
+import com.paintfactory.inventory.data.local.dao.SyncDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,32 +27,22 @@ object AppModule {
             AppDatabase::class.java,
             "paint_inventory.db"
         )
-        .fallbackToDestructiveMigration()
-        .build()
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
-    fun provideMaterialDao(database: AppDatabase): MaterialDao {
-        return database.materialDao()
-    }
+    fun provideMaterialDao(database: AppDatabase): MaterialDao = database.materialDao()
 
     @Provides
-    fun provideInventoryDao(database: AppDatabase): InventoryDao {
-        return database.inventoryDao()
-    }
+    fun provideInventoryDao(database: AppDatabase): InventoryDao = database.inventoryDao()
 
     @Provides
-    fun provideFormulaDao(database: AppDatabase): FormulaDao {
-        return database.formulaDao()
-    }
+    fun provideFormulaDao(database: AppDatabase): FormulaDao = database.formulaDao()
 
     @Provides
-    fun provideBatchDao(database: AppDatabase): BatchDao {
-        return database.batchDao()
-    }
+    fun provideBatchDao(database: AppDatabase): BatchDao = database.batchDao()
 
     @Provides
-    fun provideSyncDao(database: AppDatabase): SyncDao {
-        return database.syncDao()
-    }
+    fun provideSyncDao(database: AppDatabase): SyncDao = database.syncDao()
 }

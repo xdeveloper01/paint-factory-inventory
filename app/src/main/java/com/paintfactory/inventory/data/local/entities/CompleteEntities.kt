@@ -9,31 +9,31 @@ data class RawMaterial(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val sku: String,
     val nameEn: String,
-    val nameAr: String?,
+    val nameAr: String? = null,
     val shortNameEn: String,
-    val shortNameAr: String?,
-    val descriptionEn: String?,
-    val descriptionAr: String?,
+    val shortNameAr: String? = null,
+    val descriptionEn: String? = null,
+    val descriptionAr: String? = null,
     val category: ChemicalCategory,
-    val subCategory: String?,
+    val subCategory: String? = null,
     val defaultUnit: MeasureUnit,
-    val density: Float?,
-    val specificGravity: Float?,
+    val density: Float? = null,
+    val specificGravity: Float? = null,
     val isHazardous: Boolean,
-    val casNumber: String?,
-    val unNumber: String?,
-    val hazardClass: HazmatClass?,
-    val storageTempMin: Float?,
-    val storageTempMax: Float?,
+    val casNumber: String? = null,
+    val unNumber: String? = null,
+    val hazardClass: HazmatClass? = null,
+    val storageTempMin: Float? = null,
+    val storageTempMax: Float? = null,
     val shelfLifeDays: Int,
     val reorderPoint: Float,
     val reorderQty: Float,
-    val maxStockLevel: Float?,
-    val standardCost: BigDecimal?,
+    val maxStockLevel: Float? = null,
+    val standardCost: BigDecimal? = null,
     val currency: String = "USD",
-    val preferredSupplierId: String?,
-    val sdsDocumentEnPath: String?,
-    val sdsDocumentArPath: String?,
+    val preferredSupplierId: String? = null,
+    val sdsDocumentEnPath: String? = null,
+    val sdsDocumentArPath: String? = null,
     val isActive: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
@@ -75,7 +75,7 @@ data class Formula(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val code: String,
     val nameEn: String,
-    val nameAr: String?,
+    val nameAr: String? = null,
     val version: Int = 1,
     val isActive: Boolean = true,
     val previousVersionId: String?,
@@ -101,6 +101,7 @@ data class Formula(
 @Entity(
     tableName = "formula_components",
     primaryKeys = ["formulaId", "materialId"],
+    indices = [Index("formulaId"), Index("materialId")],
     foreignKeys = [
         ForeignKey(entity = Formula::class, parentColumns = ["id"], childColumns = ["formulaId"], onDelete = ForeignKey.CASCADE),
         ForeignKey(entity = RawMaterial::class, parentColumns = ["id"], childColumns = ["materialId"], onDelete = ForeignKey.CASCADE)
@@ -120,7 +121,7 @@ data class FormulaComponent(
 @Entity(
     tableName = "production_batches",
     foreignKeys = [ForeignKey(entity = Formula::class, parentColumns = ["id"], childColumns = ["formulaId"], onDelete = ForeignKey.RESTRICT)],
-    indices = [Index("batchNumber", unique = true), Index("status"), Index("plannedDate")]
+    indices = [Index("batchNumber", unique = true), Index("status"), Index("plannedDate"), Index("formulaId")]
 )
 data class ProductionBatch(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
@@ -200,3 +201,69 @@ enum class PaintType { PRIMER, UNDERCOAT, BASE, FINISH, TEXTURE, INDUSTRIAL, SPE
 enum class BatchStatus { PLANNED, ISSUED, MIXING, QC_TESTING, FINISHED, REJECTED, CANCELLED }
 enum class OperationType { LOT_CONSUMPTION, INVENTORY_RECEIPT, INVENTORY_ADJUSTMENT, LOT_MOVE, BATCH_CREATION, QC_UPDATE }
 enum class SyncStatus { PENDING, IN_PROGRESS, FAILED_RETRYABLE, FAILED_FATAL, SYNCED }
+object SampleData {
+    fun getSampleMaterials(): List<RawMaterial> = listOf(
+        RawMaterial(
+            sku = "PIG-TIO2-001",
+            nameEn = "Titanium Dioxide Rutile",
+            nameAr = "ثاني أكسيد التيتانيوم الروتيلي",
+            shortNameEn = "TiO2-Rutile",
+            shortNameAr = "TiO2-روتيل",
+            category = ChemicalCategory.PIGMENT,
+            defaultUnit = MeasureUnit.KILOGRAM,
+            density = 4.23f,
+            isHazardous = false,
+            shelfLifeDays = 730,
+            reorderPoint = 500f,
+            reorderQty = 1000f,
+            standardCost = BigDecimal("15.50")
+        ),
+        RawMaterial(
+            sku = "RES-EPOX-001", 
+            nameEn = "Epoxy Resin",
+            nameAr = "راتنج إيبوكسي",
+            shortNameEn = "Epoxy-Resin",
+            shortNameAr = "إيبوكسي",
+            category = ChemicalCategory.RESIN,
+            defaultUnit = MeasureUnit.KILOGRAM,
+            density = 1.16f,
+            isHazardous = true,
+            hazardClass = HazmatClass.TOXIC,
+            shelfLifeDays = 365,
+            reorderPoint = 200f,
+            reorderQty = 500f,
+            standardCost = BigDecimal("8.75")
+        ),
+        RawMaterial(
+            sku = "SOLV-TOLU-001",
+            nameEn = "Toluene Solvent",
+            nameAr = "مذيب التولوين",
+            shortNameEn = "Toluene",
+            shortNameAr = "تولوين",
+            category = ChemicalCategory.SOLVENT,
+            defaultUnit = MeasureUnit.LITER,
+            density = 0.87f,
+            isHazardous = true,
+            hazardClass = HazmatClass.FLAMMABLE_LIQUID,
+            shelfLifeDays = 1095,
+            reorderPoint = 300f,
+            reorderQty = 1000f,
+            standardCost = BigDecimal("3.25")
+        ),
+        RawMaterial(
+            sku = "ADD-DEFO-001",
+            nameEn = "Defoamer",
+            nameAr = "مضاد الرغوة",
+            shortNameEn = "Defoamer",
+            shortNameAr = "مضاد رغوة",
+            category = ChemicalCategory.ADDITIVE,
+            defaultUnit = MeasureUnit.KILOGRAM,
+            density = 0.95f,
+            isHazardous = false,
+            shelfLifeDays = 540,
+            reorderPoint = 50f,
+            reorderQty = 100f,
+            standardCost = BigDecimal("12.00")
+        )
+    )
+}
