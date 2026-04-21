@@ -1,0 +1,129 @@
+package com.paintfactory.inventory.data.local.dao
+
+import androidx.room.*
+import com.paintfactory.inventory.data.local.entities.*
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface MaterialDao {
+    @Query("SELECT * FROM raw_materials WHERE isActive = 1 ORDER BY nameEn ASC")
+    fun getAll(): Flow<List<RawMaterial>>
+    
+    @Query("SELECT * FROM raw_materials WHERE isActive = 1 ORDER BY nameAr ASC")
+    fun getAllArabic(): Flow<List<RawMaterial>>
+    
+    @Query("""
+        SELECT * FROM raw_materials 
+        WHERE (nameEn LIKE '%' || :query || '%' OR nameAr LIKE '%' || :query || '%' OR sku LIKE '%' || :query || '%')
+        AND isActive = 1
+    """)
+    suspend fun searchMaterials(query: String): List<RawMaterial>
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(material: RawMaterial)
+    
+    @Update
+    suspend fun update(material: RawMaterial)
+    
+    @Query("SELECT * FROM raw_materials WHERE id = :id")
+    suspend fun getById(id: String): RawMaterial?
+    
+    @Query("SELECT * FROM raw_materials WHERE category = :category AND isActive = 1")
+    fun getByCategory(category: ChemicalCategory): Flow<List<RawMaterial>>
+}
+
+@Dao
+interface InventoryDao {
+    @Query("""
+        SELECT * FROM inventory_lots 
+        WHERE materialId = :materialId 
+        AND status = 'AVAILABLE'
+        AND expiryDate > :currentTime
+        ORDER BY receivedDate ASC
+    """)
+    suspend fun getAvailableLotsOrderedByExpiry(materialId: String, currentTime: Long): List<InventoryLot>
+    
+    @Query("""
+        SELECT materialId, SUM(quantityCurrent - quantityReserved) as availableQty,
+        MIN(expiryDate) as earliestExpiry
+        FROM inventory_lots
+        WHERE status = 'AVAILABLE'
+        GROUP BY materialId
+    """)
+    fun getStockAvailability(): Flow<List<StockAvailability>>
+    
+    @Query("UPDATE inventory_lots SET quantityCurrent = quantityCurrent - :amount, version = version + 1, lastModified = :timestamp WHERE id = :lotId")
+    suspend fun consumeFromLot(lotId: String, amount: Float, timestamp: Long = System.currentTimeMillis())
+    
+    @Insert
+    suspend fun insertLot(lot: InventoryLot)
+    
+    @Update
+    suspend fun updateLot(lot: InventoryLot)
+    
+    @Query("SELECT * FROM inventory_lots WHERE id = :lotId")
+    suspend fun getLotById(lotId: String): InventoryLot?
+    
+    @Query("SELECT * FROM inventory_lots WHERE materialId = :materialId ORDER BY receivedDate DESC")
+    fun getLotsForMaterial(materialId: String): Flow<List<InventoryLot>>
+    
+    data class StockAvailability(
+        val materialId: String,
+        val availableQty: Float,
+        val earliestExpiry: Long?
+    )
+}
+
+@Dao
+interface FormulaDao {
+    @Query("SELECT * FROM formulas WHERE isActive = 1")
+    fun getAllActive(): Flow<List<Formula>>
+    
+    @Query("SELECT * FROM formulas WHERE id = :formulaId")
+    suspend fun getById(formulaId: String): Formula?
+    
+    @Query("SELECT * FROM formula_components WHERE formulaId = :formulaId ORDER BY sequence ASC")
+    suspend fun getComponents(formulaId: String): List<FormulaComponent>
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFormula(formula: Formula)
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertComponent(component: FormulaComponent)
+}
+
+@Dao
+interface BatchDao {
+    @Insert
+    suspend fun insertBatch(batch: ProductionBatch)
+    
+    @Insert
+    suspend fun insertConsumption(consumption: LotConsumption)
+    
+    @Query("SELECT * FROM production_batches WHERE status = :status ORDER BY plannedDate DESC")
+    fun getBatchesByStatus(status: BatchStatus): Flow<List<ProductionBatch>>
+    
+    @Query("SELECT * FROM production_batches WHERE id = :batchId")
+    suspend fun getBatchById(batchId: String): ProductionBatch?
+    
+    @Query("SELECT * FROM lot_consumptions WHERE batchId = :batchId")
+    suspend fun getConsumptionsForBatch(batchId: String): List<LotConsumption>
+    
+    @Update
+    suspend fun updateBatch(batch: ProductionBatch)
+}
+
+@Dao
+interface SyncDao {
+    @Query("SELECT * FROM pending_transactions WHERE syncStatus = 'PENDING' ORDER BY sequenceNumber ASC")
+    suspend fun getPendingOrderedBySequence(): List<PendingTransaction>
+    
+    @Insert
+    suspend fun insertTransaction(transaction: PendingTransaction)
+    
+    @Query("UPDATE pending_transactions SET syncStatus = :status, attemptCount = attemptCount + 1, lastAttempt = :timestamp WHERE id = :id")
+    suspend fun updateSyncStatus(id: String, status: SyncStatus, timestamp: Long)
+    
+    @Query("SELECT COUNT(*) FROM pending_transactions WHERE syncStatus = 'PENDING'")
+    fun getPendingCount(): Flow<Int>
+}
