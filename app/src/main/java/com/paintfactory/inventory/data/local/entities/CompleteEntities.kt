@@ -40,6 +40,34 @@ data class RawMaterial(
 )
 
 @Entity(
+    tableName = "storage_locations",
+    indices = [Index("code", unique = true), Index("isActive")]
+)
+data class StorageLocation(
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val code: String,
+    val name: String,
+    val type: LocationType,
+    val parentLocationId: String? = null,
+    val isActive: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Entity(
+    tableName = "suppliers",
+    indices = [Index("code", unique = true), Index("isActive")]
+)
+data class Supplier(
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val code: String,
+    val name: String,
+    val contactName: String? = null,
+    val phone: String? = null,
+    val email: String? = null,
+    val isActive: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis()
+)
+@Entity(
     tableName = "inventory_lots",
     foreignKeys = [ForeignKey(entity = RawMaterial::class, parentColumns = ["id"], childColumns = ["materialId"], onDelete = ForeignKey.CASCADE)],
     indices = [Index("materialId"), Index("lotNumber", unique = true), Index("expiryDate"), Index("status")]
@@ -70,6 +98,38 @@ data class InventoryLot(
     val deviceId: String = ""
 )
 
+@Entity(
+    tableName = "inventory_movements",
+    foreignKeys = [
+        ForeignKey(entity = RawMaterial::class, parentColumns = ["id"], childColumns = ["materialId"], onDelete = ForeignKey.RESTRICT),
+        ForeignKey(entity = InventoryLot::class, parentColumns = ["id"], childColumns = ["lotId"], onDelete = ForeignKey.SET_NULL),
+        ForeignKey(entity = StorageLocation::class, parentColumns = ["id"], childColumns = ["fromLocationId"], onDelete = ForeignKey.SET_NULL),
+        ForeignKey(entity = StorageLocation::class, parentColumns = ["id"], childColumns = ["toLocationId"], onDelete = ForeignKey.SET_NULL)
+    ],
+    indices = [
+        Index("materialId"),
+        Index("lotId"),
+        Index("movementType"),
+        Index("fromLocationId"),
+        Index("toLocationId"),
+        Index("createdAt")
+    ]
+)
+data class InventoryMovement(
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val movementType: MovementType,
+    val materialId: String,
+    val lotId: String? = null,
+    val quantity: Float,
+    val unit: MeasureUnit,
+    val fromLocationId: String? = null,
+    val toLocationId: String? = null,
+    val referenceType: String? = null,
+    val referenceId: String? = null,
+    val notes: String? = null,
+    val performedBy: String,
+    val createdAt: Long = System.currentTimeMillis()
+)
 @Entity(tableName = "formulas")
 data class Formula(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
@@ -195,6 +255,8 @@ data class PendingTransaction(
 enum class ChemicalCategory { PIGMENT, RESIN, SOLVENT, ADDITIVE, FILLER, THINNER, CATALYST }
 enum class MeasureUnit { KILOGRAM, LITER, GRAM, MILLILITER, PIECE, GALLON, POUND }
 enum class HazmatClass { FLAMMABLE_LIQUID, TOXIC, CORROSIVE, OXIDIZER, COMBUSTIBLE, NONE }
+enum class LocationType { WAREHOUSE, PRODUCTION, QC, QUARANTINE }
+enum class MovementType { RECEIPT, ADJUSTMENT, TRANSFER, RESERVATION, RELEASE, CONSUMPTION }
 enum class LotStatus { QUARANTINE, AVAILABLE, RESERVED, BLOCKED, EXPIRED, EMPTY, DISPOSED }
 enum class QCStatus { PENDING, PASSED, FAILED, CONDITIONAL }
 enum class PaintType { PRIMER, UNDERCOAT, BASE, FINISH, TEXTURE, INDUSTRIAL, SPECIALTY }

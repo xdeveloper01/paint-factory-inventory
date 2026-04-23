@@ -1,4 +1,4 @@
-package com.paintfactory.inventory.di
+﻿package com.paintfactory.inventory.di
 
 import android.content.Context
 import androidx.room.Room
@@ -6,7 +6,10 @@ import com.paintfactory.inventory.data.local.AppDatabase
 import com.paintfactory.inventory.data.local.dao.BatchDao
 import com.paintfactory.inventory.data.local.dao.FormulaDao
 import com.paintfactory.inventory.data.local.dao.InventoryDao
+import com.paintfactory.inventory.data.local.dao.InventoryMovementDao
+import com.paintfactory.inventory.data.local.dao.LocationDao
 import com.paintfactory.inventory.data.local.dao.MaterialDao
+import com.paintfactory.inventory.data.local.dao.SupplierDao
 import com.paintfactory.inventory.data.local.dao.SyncDao
 import dagger.Module
 import dagger.Provides
@@ -35,7 +38,17 @@ object AppModule {
     fun provideMaterialDao(database: AppDatabase): MaterialDao = database.materialDao()
 
     @Provides
+    fun provideLocationDao(database: AppDatabase): LocationDao = database.locationDao()
+
+    @Provides
+    fun provideSupplierDao(database: AppDatabase): SupplierDao = database.supplierDao()
+
+    @Provides
     fun provideInventoryDao(database: AppDatabase): InventoryDao = database.inventoryDao()
+
+    @Provides
+    fun provideInventoryMovementDao(database: AppDatabase): InventoryMovementDao =
+        database.inventoryMovementDao()
 
     @Provides
     fun provideFormulaDao(database: AppDatabase): FormulaDao = database.formulaDao()
