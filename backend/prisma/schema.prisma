@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ItemType {
+  RAW_MATERIAL
+  FINISHED_GOOD
+}
+
+enum MovementType {
+  PO_RECEIPT
+  PRODUCTION_CONSUMPTION
+  PRODUCTION_YIELD
+  DISPATCH
+  TRANSFER
+  ADJUSTMENT
+}
+
+enum BatchStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Item {
+  id            String   @id @default(uuid()) @db.Uuid
+  sku           String   @unique
+  name          String
+  type          ItemType
+  unitOfMeasure String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  lots             Lot[]
+  stockMovements   StockMovement[]
+  bomAsFinished    BOM[]          @relation("FinishedGood")
+  bomComponents    BOMComponent[]
+}
+
+model Warehouse {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  locations Location[]
+}
+
+model Location {
+  id          String   @id @default(uuid()) @db.Uuid
+  warehouseId String   @db.Uuid
+  name        String
+  type        String   // e.g. RACK, BIN, SHELF
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  warehouse      Warehouse       @relation(fields: [warehouseId], references: [id])
+  stockMovements StockMovement[]
+}
+
+model Lot {
+  id          String   @id @default(uuid()) @db.Uuid
+  itemId      String   @db.Uuid
+  lotNumber   String
+  expiryDate  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  item           Item            @relation(fields: [itemId], references: [id])
+  stockMovements StockMovement[]
+
+  @@unique([itemId, lotNumber])
+}
+
+model StockMovement {
+  id           String       @id @default(uuid()) @db.Uuid
+  itemId       String       @db.Uuid
+  locationId   String       @db.Uuid
+  lotId        String?      @db.Uuid
+  quantity     Decimal      @db.Decimal(10, 2)
+  movementType MovementType
+  referenceId  String?      @db.Uuid // UUID referencing PO, Batch, Dispatch
+  notes        String?
+  createdAt    DateTime     @default(now())
+
+  item     Item     @relation(fields: [itemId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+  lot      Lot?     @relation(fields: [lotId], references: [id])
+
+  @@index([itemId])
+  @@index([locationId])
+  @@index([referenceId])
+}
+
+model BOM {
+  id             String   @id @default(uuid()) @db.Uuid
+  finishedGoodId String   @db.Uuid
+  version        String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  finishedGood Item           @relation("FinishedGood", fields: [finishedGoodId], references: [id])
+  components   BOMComponent[]
+  batches      ProductionBatch[]
+
+  @@unique([finishedGoodId, version])
+}
+
+model BOMComponent {
+  id            String   @id @default(uuid()) @db.Uuid
+  bomId         String   @db.Uuid
+  rawMaterialId String   @db.Uuid
+  targetQuantity Decimal @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  bom         BOM  @relation(fields: [bomId], references: [id])
+  rawMaterial Item @relation(fields: [rawMaterialId], references: [id])
+}
+
+model ProductionBatch {
+  id             String      @id @default(uuid()) @db.Uuid
+  batchNumber    String      @unique
+  finishedGoodId String      @db.Uuid
+  bomId          String      @db.Uuid
+  targetYield    Decimal     @db.Decimal(10, 2)
+  status         BatchStatus @default(PLANNED)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  bom BOM @relation(fields: [bomId], references: [id])
+}
+
+model Supplier {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  name      String
+  contact   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+}
+
+model PurchaseOrder {
+  id         String   @id @default(uuid()) @db.Uuid
+  supplierId String   @db.Uuid
+  poNumber   String   @unique
+  status     String   @default("DRAFT")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+  items    PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  purchaseOrderId String   @db.Uuid
+  itemId          String   @db.Uuid
+  quantity        Decimal  @db.Decimal(10, 2)
+  price           Decimal  @db.Decimal(10, 2)
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+}

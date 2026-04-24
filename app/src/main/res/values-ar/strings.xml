@@ -1,7 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App -->
     <string name="app_name">إدارة مخزن المصبغة</string>
+    
+    <!-- Navigation -->
     <string name="inventory">المخزون</string>
+    <string name="batch_creation">إنشاء دفعة</string>
+    <string name="mixing">الخلط</string>
+    <string name="settings">الإعدادات</string>
+    <string name="reports">التقارير</string>
+    
+    <!-- Actions -->
     <string name="search">بحث</string>
+    <string name="scan_barcode">مسح الباركود</string>
+    <string name="add">إضافة</string>
+    <string name="edit">تعديل</string>
+    <string name="delete">حذف</string>
+    <string name="save">حفظ</string>
+    <string name="cancel">إلغاء</string>
     <string name="confirm">تأكيد</string>
+    <string name="back">رجوع</string>
+    
+    <!-- Inventory -->
+    <string name="materials_list">قائمة المواد</string>
+    <string name="add_material">إضافة مادة جديدة</string>
+    <string name="edit_material">تعديل مادة</string>
+    <string name="material_details">تفاصيل المادة</string>
+    <string name="current_stock">الرصيد الحالي</string>
+    <string name="reorder_point">نقطة إعادة الطلب</string>
+    <string name="expiry_date">تاريخ الانتهاء</string>
+    <string name="lot_number">رقم الدفعة</string>
+    <string name="quantity">الكمية</string>
+    
+    <!-- Chemical Categories -->
+    <string name="category_pigment">صبغة</string>
+    <string name="category_resin">راتنج</string>
+    <string name="category_solvent">مذيب</string>
+    <string name="category_additive">مضاف</string>
+    <string name="category_filler">حشوة</string>
+    <string name="category_thinner">مخفف</string>
+    <string name="category_catalyst">محفز</string>
+    
+    <!-- Units -->
+    <string name="unit_kg">كجم</string>
+    <string name="unit_liter">لتر</string>
+    <string name="unit_gram">غرام</string>
+    <string name="unit_piece">قطعة</string>
+    
+    <!-- Safety -->
+    <string name="hazardous">مادة خطرة</string>
+    <string name="safety_data_sheet">بيانات السلامة</string>
+    <string name="flammable">قابل للاشتعال</string>
+    <string name="toxic">سمّي</string>
+    <string name="corrosive">كاوٍ</string>
+    
+    <!-- Batch/Production -->
+    <string name="batch_number">رقم الدفعة</string>
+    <string name="formula">التركيبة</string>
+    <string name="target_quantity">الكمية المستهدفة</string>
+    <string name="actual_quantity">الكمية الفعلية</string>
+    <string name="yield">الإنتاجية</string>
+    <string name="start_mixing">بدء الخلط</string>
+    <string name="complete_batch">إنهاء الدفعة</string>
+    
+    <!-- Quality Control -->
+    <string name="viscosity">اللزوجة</string>
+    <string name="ph">الحمضية</string>
+    <string name="color_match">تطابق اللون</string>
+    <string name="qc_passed">اجتاز الفحص</string>
+    <string name="qc_failed">فشل في الفحص</string>
+    
+    <!-- Messages -->
+    <string name="offline_mode">وضع عدم الاتصال</string>
+    <string name="sync_pending">في انتظار المزامنة</string>
+    <string name="loading">جاري التحميل...</string>
+    <string name="error">خطأ</string>
+    <string name="success">نجاح</string>
+    
+    <!-- Errors -->
+    <string name="error_no_internet">لا يوجد اتصال بالإنترنت</string>
+    <string name="error_scan_failed">فشل في المسح</string>
+    <string name="error_insufficient_stock">رصيد غير كافٍ</string>
+    
+    <!-- Status -->
+    <string name="status_available">متاح</string>
+    <string name="status_reserved">محجوز</string>
+    <string name="status_expired">منتهي الصلاحية</string>
 </resources>

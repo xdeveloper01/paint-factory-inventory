@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
+import com.paintfactory.inventory.ui.navigation.InventoryNavigation
 import com.paintfactory.inventory.ui.theme.PaintFactoryTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -20,7 +22,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // We'll add content here later
+                    val navController = rememberNavController()
+                    InventoryNavigation(navController = navController)
                 }
             }
         }
